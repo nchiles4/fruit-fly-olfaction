@@ -4,68 +4,49 @@
 (*Two Bloom Filter Initialization*)
 
 
-(* BeginPackage["Novelty`"];
-Novelty::usage=
-"Novelty returns a similarity score for an unseen test value with a stored set of training data."
+(* BeginPackage["pos`"];
+pos::usage=
+"pos returns a list of novelty scores for a set of queries evaluated by a Fly Bloom Filter 
+trained only with active molecules."
 
-Begin["`Private`"];
-M[size_:2000,numberOfBits_:6,inputLength_:2048]:=Table[
-RandomSample[Join[Table[1,numberOfBits],
-Table[0,size-numberOfBits]]],inputLength];
-End[];
+pos[actData_,inactData_][train_,test_,iterations_]:=ParallelTable[
+Total[twoFilter[sampleSplit[actData,train+test,train],sampleSplit[inactData,train,train]]]/test,iterations];
+EndPackage[]; *)
 
-Begin["`Private`"];
-projectM[statRandM_][traindata_,m_:2000,k_:25]:=ReplacePart[
-Table[1,m],#->0&/@Ordering[traindata . statRandM,-k]];
-End[];
 
-Begin["`Private`"];
-consolidateM[statRandM_?MatrixQ,training_List]:=projectM[statRandM]/@training//Total;
-End[];
+(* BeginPackage["neg`"];
+neg::usage=
+"neg returns a list of novelty scores for a set of queries evaluated by a Fly Bloom Filter 
+trained only with inactive molecules."
 
-Begin["`Private`"];
-flattenM[consolidateM_,n_]:=EqualTo[n]/@consolidateM//Boole;
-End[];
+neg[actData_,inactData_][train_,test_,iterations_]:=ParallelTable[
+Total[twoFilter[sampleSplit[actData,train,train],sampleSplit[inactData,train+test,train]]]/test,iterations];
+EndPackage[]; *)
 
-Begin["`Private`"];
-inputFunction[statRandM_,traindata_List]:=flattenM[
-consolidateM[statRandM,traindata],Length[traindata]];
-End[]
 
-Novelty[statRandM_,train_List][test_]:=With[
-{tr=inputFunction[statRandM,train],
-te=inputFunction[statRandM,{test}]},
- Mean@Pick[tr,te,0]]
- 
- EndPackage[] *)
-
+(* Begin["`Private`"]; *)
 
 (* defines random sparse binary matrix *)
 M[size_:2000,numberOfBits_:6,inputLength_:2048]:=Table[
 RandomSample[Join[Table[1,numberOfBits],
 Table[0,size-numberOfBits]]],inputLength];
 
-
 (* reduces dimensions of initial fingerprint by taking product of fp and random matrix *)
 projectM[statRandM_][traindata_,m_:2000,k_:25]:=ReplacePart[
 Table[1,m],#->0&/@Ordering[traindata . statRandM,-k]];
 consolidateM[statRandM_?MatrixQ,training_List]:=projectM[statRandM]/@training//Total
 
-
 (* unitizes output *)
 flattenM[consolidateM_,n_]:=EqualTo[n]/@consolidateM//Boole
 
-
 (* recalls flattening functions given training data size *)
 inputFunction[statRandM_,traindata_List]:=flattenM[consolidateM[statRandM,traindata],Length[traindata]];
-
 
 (* defines functions to compare outputs between trained filter and testing fingerprints *)
 novelty[statRandM_,train_List][test_]:=With[
 {tr=inputFunction[statRandM,train],
 te=inputFunction[statRandM,{test}]},
  Mean@Pick[tr,te,0]]
-
 
 (* creates two filters trained with different data, outputs 1 if higher similarity with actives, 
 0 if higher similarity with inactives *)
@@ -76,12 +57,15 @@ inactivetrain=splitDataInactive[[1]],
 test=Join[splitDataActive[[2]],splitDataInactive[[2]]]},
 NonNegative[novelty[staticRandomMatrix,inactivetrain]/@test-
 novelty[staticRandomMatrix,activetrain]/@test]//Boole]
+(* EndPackage[]; *)
 
 
 pos[actData_,inactData_][train_,test_,iterations_]:=ParallelTable[
 Total[twoFilter[sampleSplit[actData,train+test,train],sampleSplit[inactData,train,train]]]/test,iterations]; 
 neg[actData_,inactData_][train_,test_,iterations_]:=ParallelTable[
 Total[twoFilter[sampleSplit[actData,train,train],sampleSplit[inactData,train+test,train]]]/test,iterations];
+
+
 
 
 (* ::Subtitle:: *)
