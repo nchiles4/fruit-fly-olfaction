@@ -1,0 +1,225 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 13.0' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       158,          7]
+NotebookDataLength[      9423,        217]
+NotebookOptionsPosition[      8954,        202]
+NotebookOutlinePosition[      9376,        218]
+CellTagsIndexPosition[      9333,        215]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+Cell[TextData[{
+ StyleBox["All functions defined in \[OpenCurlyQuote]fruit fly functions.wl\
+\[CloseCurlyQuote]", "Chapter"],
+ "\n\n",
+ StyleBox["Two Bloom Filter Initialization", "Section"],
+ "\n\n",
+ StyleBox["M[] ", "Subsubsection"],
+ "defines a random sparse binary matrix to simulate the neural connections \
+between odorant receptor neurons (ORNs) and Kenyon cells (KCs) in the \
+mushroom body in the ",
+ StyleBox["Drosophila",
+  FontSlant->"Italic"],
+ " olfactory neural circuit. \[OpenCurlyQuote]size\[CloseCurlyQuote] defines \
+the eventual size of the final filter, \[OpenCurlyQuote]numberOfBits\
+\[CloseCurlyQuote] defines how many bits per row will be filled (with a 1), \
+and \[OpenCurlyQuote]inputLength\[CloseCurlyQuote] must match the shape of \
+the specific data being evaluated. (We used Morgan fingerprints to convey \
+molecular information, each having a fixed length of 2048.)\n\n",
+ StyleBox["projectM[]", "Subsubsection"],
+ " returns the positions of the top \[OpenCurlyQuote]k\[CloseCurlyQuote] \
+values in the resultant matrix after multiplying each training input with M[] \
+(our defined random matrix). In true fruit fly olfaction, a given odor will \
+stimulate varying degrees of ORN activity. Once these activities are randomly \
+and sparsely projected to the mushroom body, the most active ~5% of KCs will \
+inhibit the remaining ~95% of neurons, thereby becoming themselves the unique \
+distributed code for that odor.\n\n",
+ StyleBox["consolidateM[]", "Subsubsection"],
+ " performs the projectM[] operation across all training inputs and sums \
+every output together, returning a final vector containing the unique \
+\[OpenCurlyQuote]codes\[CloseCurlyQuote] for each input, stacked together. \
+There is no fruit fly analogue for this step.\n\n",
+ StyleBox["flattenM[]", "Subsubsection"],
+ " unitizes the previous output. Positions in the final vector which are \
+common across all outputs remain as \[OpenCurlyQuote]1\[CloseCurlyQuote] in \
+the final unitized vector, and all other positions are reset to 0.\n\n",
+ StyleBox["inputFunction[]", "Subsubsection"],
+ " recalls flattenM function given a set of training data.\n\n",
+ StyleBox["novelty[]", "Subsubsection"],
+ " defines a function to compare the final representations after applying \
+inputFunction to a training population and a single test input\n\n",
+ StyleBox["twoFilter[]", "Subsubsection"],
+ " applies the novelty function to a population of inputs labeled with two \
+different classes\n\n",
+ StyleBox["pos[] ", "Subsubsection"],
+ "and",
+ StyleBox[" neg[]", "Subsubsection"],
+ " are the functions explicitly called which implement the full fruit fly \
+filter. The ",
+ "filter can only differentiate between two classes, specified here by \
+pos/neg or active/inactive. \n\n",
+ StyleBox["pos[]",
+  FontWeight->"Bold"],
+ " requires two classes of data, training size, test size, and number \tof \
+iterations to be specified. ",
+ StyleBox["IMPORTANT",
+  FontSlant->"Italic"],
+ ": Length[actData]-\t\t\t\tLength[inactData] == test_ must be True. (The \
+number of provided \t\tactive inputs must be larger than the number of \
+inactive inputs by \t\tsize, \[OpenCurlyQuote]test\[CloseCurlyQuote])\n\n",
+ StyleBox["neg[]",
+  FontWeight->"Bold"],
+ " requires identical inputs to pos[].  ",
+ StyleBox["IMPORTANT",
+  FontSlant->"Italic"],
+ ": \t\t\t\t\tLength[inactData]-Length[actData] == test_ must be True. (The \t\
+\t\tnumber of provided inactive inputs must be larger than the number of \t\
+active inputs by size, \[OpenCurlyQuote]test\[CloseCurlyQuote])",
+ "\n\n",
+ StyleBox["sampleSplit[]",
+  FontWeight->"Bold"],
+ " is defined below\n\n",
+ StyleBox["\[OpenCurlyQuote]iterations\[CloseCurlyQuote]",
+  FontSlant->"Italic"],
+ " is only useful when evaluating the filter\[CloseCurlyQuote]s general \t\t\t\
+classification success - if an unlabeled input is being classified, only \t\t\
+one iteration is desired.\n\n",
+ StyleBox["Splitting Sample Data", "Section"],
+ StyleBox["\n\n", "Subsection"],
+ StyleBox["sampleSplit[]", "Subsubsection"],
+ " accepts one class of data and divides it into two randomly grouped, \
+mutually exclusive lists. totalSize == Length[Data] must be True. \
+\[OpenCurlyQuote]n\[CloseCurlyQuote] defines how large the two lists will be, \
+and is equal to the desired training size. (the other list will become the \
+test set)\n\n",
+ StyleBox["sampleSplit2[]", "Subsubsection"],
+ " p",
+ "erforms the same function as sampleSplit[], but labels each input as \
+training or testing data in order to be understood by the  machine learning \
+classifiers we used as benchmarks (logistic regression, decision tree, \
+k-nearest neighbors, and random forest).\n\n",
+ StyleBox["Traditional Classifier Setup", "Section"],
+ "\n\nall of these functions reformat input data into a usable form by the \
+benchmark ML classifiers.\n\n",
+ StyleBox["evaluateModel[]", "Subsubsection"],
+ " ta",
+ "kes outputs from ",
+ StyleBox["sampleSplit2[]",
+  FontWeight->"Bold"],
+ " and evaluates accuracy/recall given a specified ML model, \
+\[OpenCurlyQuote]method.\[CloseCurlyQuote]\n\n",
+ StyleBox["booleTrue[]", "Subsubsection"],
+ " and ",
+ StyleBox["booleFalse[]", "Subsubsection"],
+ " tag inputs with their corresponding boolean value to be read by ML \
+classifiers\n\n",
+ StyleBox["boolePos[]", "Subsubsection"],
+ " and ",
+ StyleBox["booleNeg[]", "Subsubsection"],
+ " take random samples of specified size ",
+ StyleBox["\[OpenCurlyQuote]trainplustest\[CloseCurlyQuote]",
+  FontSlant->"Italic"],
+ " from the larger original dataset, tagging each with its correct boolean \
+label.\n\n",
+ StyleBox["stats[]", "Subsubsection"],
+ " consolid",
+ "ates all of the previously defined functions into one callable function \
+which outputs the accuracy and recall of a specified ML classifier on a \
+specified subset of active and inactive testing data.\n\n",
+ StyleBox["classStats[]", "Subsubsection"],
+ " is the final, and explicitly called, function used to evaluate the success \
+of benchm",
+ "ark ML classifiers. This function applies ",
+ StyleBox["stats[]",
+  FontWeight->"Bold"],
+ " through several iterations in parallel, to accelerate computational speed.\
+\n\n",
+ StyleBox["Box Whisker Charts", "Section"],
+ "\n\n",
+ StyleBox["accChart[]", "Subsubsection"],
+ "  takes prediction accuracy values from the fruit fly model and 4 benchmark \
+ML classifiers and outputs a nicely formatted box plot.\n\n",
+ StyleBox["recChart[]", "Subsubsection"],
+ " works identically to ",
+ StyleBox["accChart[] ",
+  FontWeight->"Bold"],
+ "but visualizes recall\n\n",
+ StyleBox["horiz", "Subsubsection"],
+ " is a black horizontal line at 0.5 which indicates what accuracy and recall \
+would be if predictions were made completely randomly\n\n",
+ StyleBox["F1 Scores", "Section"],
+ "\n\n",
+ StyleBox["flyConfusionMatrix[]", "Subsubsection"],
+ " consolidates outputs from ",
+ StyleBox["pos[]",
+  FontWeight->"Bold"],
+ " and ",
+ StyleBox["neg[]",
+  FontWeight->"Bold"],
+ ", the two explicitly called fruit fly filter functions, into a list with \
+the 4 values of a normal confusion matrix (TP, FP, FN, TN).\n\n",
+ StyleBox["confusionMatrix[] ", "Subsubsection"],
+ "performs identically to ",
+ StyleBox["flyConfusionMatrix[]",
+  FontWeight->"Bold"],
+ " but for the benchmark ML classifiers\n\n",
+ StyleBox["F1[]", "Subsubsection"],
+ " calculates F1 score from the created confusion matrices\n\n",
+ StyleBox["F1List[] ", "Subsubsection"],
+ "applies F1 to all 5 classifiers using the two previously created confusion \
+matrix functions\n\n",
+ StyleBox["F1Chart[]", "Subsubsection"],
+ "  accepts the output of ",
+ StyleBox["F1List[]",
+  FontWeight->"Bold"],
+ " to create a box plot of F1 scores for all 5 classifiers across a set \
+number of iterations"
+}], "Text",
+ CellChangeTimes->CompressedData["
+1:eJxTTMoPSmViYGCQAGIQXRHvNTP12xvHecyzwPSzxU+XgOjSHx/BdPyPkjUg
++tynOjAduvTldhC9+v7h3SBabFbLYRAd827mcbD+5w+ugOi7sRdvgujJ+/nu
+g2hf74BvIPrIli7GNCD9LeWZAoj+0j5RDUS/2D3fFUSnpLwQzwHSpxoMVEH0
+llcp1iB6Z56UE4ieYigRDJbX9kgC0WWT4tNANA/vlXQQbaR93oHt1xvHbeeY
+PUH03nntfiDa5VJ1LoieVx9QCKJ/VpQ0guhP5idaQfSs76nzQHTS46OLQPQ0
+3sWLQfSClU1rQHTmBdGrINpAifUmiO7e8fE/iJ4iac7BDqSNHKzEQXRHS5wc
+iFZ5kO0Kos9emBANor3WCNSD6P5/ub0geotM3QoQDQCcadlx
+  "],ExpressionUUID->"6afd9a4c-b8d0-48ca-a558-af0aefb379d0"],
+
+Cell[BoxData[""], "Input",
+ CellChangeTimes->{{3.887279396053458*^9, 
+  3.887279397201167*^9}},ExpressionUUID->"7460d8dd-1ec9-4695-907f-\
+2c3a3e7f4457"]
+},
+WindowSize->{574.8, 645.6},
+WindowMargins->{{Automatic, -4.7999999999999545`}, {Automatic, 0}},
+FrontEndVersion->"13.0 for Microsoft Windows (64-bit) (December 2, 2021)",
+StyleDefinitions->"Default.nb",
+ExpressionUUID->"d9320d72-f668-47b8-b113-3be27edec079"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[558, 20, 8237, 175, 3017, "Text",ExpressionUUID->"6afd9a4c-b8d0-48ca-a558-af0aefb379d0"],
+Cell[8798, 197, 152, 3, 28, "Input",ExpressionUUID->"7460d8dd-1ec9-4695-907f-2c3a3e7f4457"]
+}
+]
+*)
+
